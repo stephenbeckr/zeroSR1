@@ -5,13 +5,15 @@ Stephen Becker and Jalal Fadili, which appeared in [NIPS 2012](http://nips.cc/).
 
 Briefly, the algorithm follows the standard proximal-gradient method, but allows a scaled prox. This enables us to use a limited-memory SR1 method (similar to L-BFGS).
 
-The algorithm solves problems of the form min\_x f(x) + g(x) where f is differentiable (more precisely, with a Lipschitz gradient) and g is one of the following (see the paper):
+The algorithm solves problems of the form min\_x f(x) + h(x) where f is differentiable (more precisely, with a Lipschitz gradient) and h is one of the following (see the paper):
 
-Available "g" | Cost for input of size "n"
+Available "h" | Cost for input of size "n"
 ------------- | -------------
 l1 norm | O( n log n)
 non-negativity constraints | O( n log n)
-box constraitns | O( n log n )
+box constraints | O( n log n )
+l\_infinity norm constraint | O( n log n )
+[hinge loss](http://en.wikipedia.org/wiki/Hinge_loss) | O( n log n )
 
 The algorithm compares favorably with other methods, including [L-BFGS-B](http://www.mathworks.com/matlabcentral/fileexchange/35104-lbfgsb-l-bfgs-b-mex-wrapper).
 
