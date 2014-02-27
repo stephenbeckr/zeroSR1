@@ -1,6 +1,5 @@
 function varargout = prox_rank1_hinge(varargin)   
-% PROX_RANK1_HINGE returns the scaled proximity operator for a generic function h
-%   (provided the generic function is separable and has a piece-wise linear prox)
+% PROX_RANK1_HINGE returns the scaled proximity operator for the hinge loss
 %
 %   x = prox_rank1_hinge( x0, D, u )
 %           where 

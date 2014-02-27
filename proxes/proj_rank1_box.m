@@ -1,6 +1,5 @@
 function varargout = proj_rank1_box(lwr,upr,varargin)   
-% PROJ_RANK1_BOX returns the scaled proximity operator for a generic function h
-%   (provided the generic function is separable and has a piece-wise linear prox)
+% PROJ_RANK1_BOX returns the scaled proximity operator for box constraints
 %
 %   x = proj_rank1_box( lwr, upr, x0, D, u )
 %           where 

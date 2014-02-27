@@ -1,6 +1,5 @@
 function varargout = proj_rank1_linf(varargin)   
-% PROJ_RANK1_LINF returns the scaled proximity operator for a generic function h
-%   (provided the generic function is separable and has a piece-wise linear prox)
+% PROJ_RANK1_LINF returns the scaled proximity operator for l_infinity norm constraints
 %
 %   x = proj_rank1_linf( x0, D, u )
 %           where 

@@ -1,6 +1,5 @@
 function varargout = proj_rank1_Rplus(varargin)   
-% PROJ_RANK1_RPLUS returns the scaled proximity operator for a generic function h
-%   (provided the generic function is separable and has a piece-wise linear prox)
+% PROJ_RANK1_RPLUS returns the scaled proximity operator for non-negativity constraints
 %
 %   x = proj_rank1_Rplus( x0, D, u )
 %           where 

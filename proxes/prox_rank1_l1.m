@@ -1,6 +1,5 @@
 function varargout = prox_rank1_l1(varargin)   
-% PROX_RANK1_L1 returns the scaled proximity operator for a generic function h
-%   (provided the generic function is separable and has a piece-wise linear prox)
+% PROX_RANK1_L1 returns the scaled proximity operator for the l1 norm
 %
 %   x = prox_rank1_l1( x0, D, u )
 %           where 
