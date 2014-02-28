@@ -1,13 +1,23 @@
 function [f,g,h] = fminunc_wrapper(x,F,G,H, errFcn,extraFcn)
 % [f,g,h] = fminunc_wrapper( x, F, G, H, errFcn )
-% for use with Matlab's "fminunc"
+% for use with Matlab's "fminunc" and other optimization programs
+%   with similar conventinos.
+%   Here, "x" is the current point, "F" is the objective function,
+%   "G" is the gradient of F, and "H" is the Hessian of F.
+%
+%   "errFcn", if provided, will be evaulated at x and the results
+%   stored in the "errHist" variable.
 %
 % [fHist,errHist] = fminunc_wrapper()
 %       will return the function history
 %       (and error history as well, if errFcn was provided)
 %       and reset the history to zero.
+%
+% Written by Stephen Becker, 2011, stephen.beckr@gmail.com
+
 persistent errHist fcnHist nCalls
 if nargin == 0
+    % we are in [fHist,errHist] = fminunc_wrapper(); mode )
    f = fcnHist(1:nCalls);
    g = errHist(1:nCalls);
    fcnHist = [];
