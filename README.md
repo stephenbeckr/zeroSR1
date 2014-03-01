@@ -20,8 +20,9 @@ The algorithm compares favorably with other methods, including [L-BFGS-B](http:/
 This toolbox currently implements in the following languages
 
 * Matlab
+* Octave
 
-We also strive to make it compatible with Octave. Further releases may target these languages:
+Further releases may target these languages:
 
 * Python
 * R
@@ -29,6 +30,8 @@ We also strive to make it compatible with Octave. Further releases may target th
 
 # Installation
 For Matlab, there is no installation necessary. Every time you run a new Matlab session, run the `setup_zeroSR1.m` file and it will add the correct paths.
+
+Run `tests/test_solver_simple.m` to see how to solve a typical problem
 
 # Structure
 In each folder, see they `Contents.m` file for more information
