@@ -5,7 +5,7 @@ This will run a random assortment of tests
     which uses CVX (http://cvxr.com/).
     If you don't have CVX installed, then it won't work
 
-    In the future, one could make a predfined test set and then
+    In the future, one could make a predefined test set and then
     precompute the answers so that CVX is not necessary...
 
 Stephen Becker, Feb 26 2014  stephen.beckr@gmail.com
@@ -38,7 +38,7 @@ for test = 1:nTests
     sigma = 1;
     
     % Pick a solver at random
-    solverTypes = {'l1','Rplus','box','hinge','linf'};
+    solverTypes = {'l1','l1pos','Rplus','box','hinge','linf'};
     type = solverTypes{ randi(length(solverTypes)) };
     
     INVERT  = sign( randn(1) )+1; % sometimes specify V, sometimes specify inv(V)
@@ -56,6 +56,12 @@ for test = 1:nTests
             prox_brk_pts    = @(s) [-s,s];
             % or, use
             % scaledProx = @prox_rank1_l1;
+        case 'l1pos'
+            [x_cvx,V]   = solution_via_cvx('l1pos',y,d,u,lambda,offset,[],[],sigma,INVERT);
+            obj = @(x) norm(lambda.*x,1) + 1/2*myQuadForm(x-y,V) + dot(offset,x) + INFEASIBLE*any( lambda.*x < -EPS );
+            % If we use prox_rank1_generic
+            prox            = @(x,t) max(0, x - t );
+            prox_brk_pts    = @(s) [s];
         case 'rplus'
             [x_cvx,V]   = solution_via_cvx('Rplus',y,d,u,lambda,offset,[],[],sigma,INVERT);
             obj = @(x) 1/2*myQuadForm(x-y,V) + dot(offset,x) + INFEASIBLE*any( lambda.*x < -EPS );

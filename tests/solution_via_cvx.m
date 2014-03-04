@@ -35,6 +35,8 @@ function [x,V] = solution_via_cvx(type,x0,d,u,lambda,offset,lwr,upr,pm,INV)
 
 if nargin < 10 || isempty(INV), INV = true; end
 if nargin < 9 || isempty(pm), pm = +1; end
+if nargin < 8 || isempty(upr), upr = []; end
+if nargin < 7 || isempty(lwr), lwr = []; end
 if nargin < 5 || isempty(lambda), lambda = 1; end
 if nargin < 4 || isempty(u), u = 0; end
 assert( pm==-1 | pm==+1 );
@@ -90,14 +92,15 @@ if exist('OCTAVE_VERSION','builtin') || ~exist('cvx_begin','file')
     return;
 end
 
-x = solveInCVX(type,x0,V,offset,lambda);
+x = solveInCVX(type,x0,V,offset,lambda,lwr,upr);
 % clean it up a bit:
 x    = x.*( abs(x) > 1e-10 );
 
 end % end of function
 
 
-function x = solveInCVX(type,x0,V,offset,lambda)
+function x = solveInCVX(type,x0,V,offset,lambda,lwr,upr)
+n   = length(x0);
 cvx_precision best
 cvx_quiet true
 %     minimize lambda*norm(x,1) + 1/2*sum_square( Vsqrt*(x-x0) ) + dot(offset,x)
@@ -108,6 +111,13 @@ switch lower(type)
         cvx_begin
         variable x(n,1)
         minimize norm(lambda.*x,1) + 1/2*quad_form(x-x0, V ) + dot(offset,x)
+        cvx_end
+    case 'l1pos'
+        cvx_begin
+        variable x(n,1)
+        minimize norm(lambda.*x,1) + 1/2*quad_form(x-x0, V ) + dot(offset,x)
+        subject to
+            lambda.*x >= 0
         cvx_end
     case 'rplus'
         cvx_begin
