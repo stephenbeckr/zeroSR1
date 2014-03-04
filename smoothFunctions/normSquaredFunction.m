@@ -1,7 +1,7 @@
-function [f,g,h] = normSquaredFunction(x,A,At,b,errFcn,extraFcn)
-% f = normSquaredFunction(x,A,At,c, errFcn,extraFcn)
+function [f,g,h] = normSquaredFunction(x,A,At,b,errFcn,extraFcn, constant)
+% f = normSquaredFunction(x,A,At,c, errFcn,extraFcn, constant)
 %   returns the objective function 'f'
-%   to f(x) = .5||Ax-b||_2^2
+%   to f(x) = .5||Ax-b||_2^2 + constant
 % [f,g,h] = ...
 %   return the gradient and Hessian as well
 %
@@ -21,7 +21,7 @@ function [f,g,h] = normSquaredFunction(x,A,At,b,errFcn,extraFcn)
 %   to quadraticFunction( x, Q, c ) where
 %   Q = A'*A and c = A'*b.
 %   (*almost equivalent since there is a constant value difference in 
-%    the objective function)
+%    the objective function; you can use "constant" to change this)
 %
 % The Lipschitz constant of the gradient is 
 %   the squared spectral norm of A, i.e., norm(A)^2
@@ -44,7 +44,7 @@ if isempty( fcnHist )
     [errHist,fcnHist] = deal( zeros(100,1) );
 end
 
-error(nargchk(4,6,nargin,'struct'));
+error(nargchk(4,7,nargin,'struct'));
 if isa(A,'function_handle')
     Ax = A(x);
 else
@@ -52,6 +52,9 @@ else
 end
 res = Ax - b;
 f   = .5*norm(res(:))^2;
+if nargin >= 7 && ~isempty(constant)
+    f = f + constant;
+end
 
 % Record this:
 nCalls = nCalls + 1;

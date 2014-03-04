@@ -1,7 +1,7 @@
-function [f,g,h] = quadraticFunction(x,Q,c,errFcn,extraFcn)
-% f = quadraticFunction(x,Q,c, errFcn,extraFcn)
+function [f,g,h] = quadraticFunction(x,Q,c,errFcn,extraFcn, constant)
+% f = quadraticFunction(x,Q,c, errFcn,extraFcn,constant)
 %   returns the objective function 'f'
-%   to f(x) = .5<x,Qx> - <c,x>
+%   to f(x) = .5<x,Qx> - <c,x> + constant
 % [f,g,h] = ...
 %   return the gradient and Hessian as well
 %
@@ -49,6 +49,9 @@ else
     Qx = Q*x;
 end
 f   = (x'*Qx)/2 - c'*x;
+if nargin >= 6 && ~isempty(constant)
+    f   = f + constant;
+end
 
 % Record this:
 nCalls = nCalls + 1;

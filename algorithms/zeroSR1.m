@@ -1,6 +1,6 @@
 function [xk,nit, errStruct, defaultOpts, stepsizes] = zeroSR1(fcn,grad,h,prox,opts)
 % ZEROSR1 Solves smooth + nonsmooth/constrained optimization problems
-% [xk,nit, errStruct, outOpts] = zeroSR1(f,grad_f,h,proj,opts)
+% [xk,nit, errStruct, outOpts] = zeroSR1(f,grad_f,h,prox_h,opts)
 %
 % This uses the zero-memory SR1 method (quasi-Newton) to solve:
 % 
@@ -17,14 +17,26 @@ function [xk,nit, errStruct, defaultOpts, stepsizes] = zeroSR1(fcn,grad,h,prox,o
 %   f and grad_f if nargout=2). This method is often preferable
 %   since you can re-use computation
 %
-%   y = prox( x0 , d, v, ) 
+%   'h' is the non-smooth function, and prox_h is a function with
+%   3 or 4 inputs that returns:
+%       y = prox_h( x0 , d, v, ) 
 % where
-%   y = argmin_x h(x) + 1/2||x-x0||^2_B 
-% where
-%   B = inv(H) = inv( diag(D) + v*v' )
+%       y = argmin_x h(x) + 1/2||x-x0||^2_B 
+% and
+%       B = inv(H) = inv( diag(D) + v*v' )
+% or, for the case with 4 arguments, y = prox_h( x0, d, v, sigma )
+%   then B = inv( diag(D) + sigma*v*v' ) where sigma should be +1 or -1
+%   The 4 argument case only matters when opts.SR1=true and opts.BB_type=1
+%   or opts.SR1=true, opts.BB_type=1 and opts.SR1_diagWeight > 1
 %
-% If 'prox' isn't provided or is [], it defaults to the identity mapping, which corresponds
+% If 'prox_h' isn't provided or is [], it defaults to the identity mapping, which corresponds
 %   to the case when h=0.
+%
+% 'prox_h' is mean to be given by something like prox_rank1_l1
+% e.g., 
+%   prox        = @(x0,d,v) prox_rank1_l1( x0, d, v, lambda );
+%   or, for 4 arguments,
+%   prox        = @(x0,d,v,varargin) prox_rank1_l1( x0, d, v, lambda, [], varargin{:} );
 %
 % "opts" is a structure with additional options. To see their default values,
 %   call this function with no input arguments.
@@ -42,6 +54,9 @@ function [xk,nit, errStruct, defaultOpts, stepsizes] = zeroSR1(fcn,grad,h,prox,o
 %   .SR1  if true, uses the zero-memory SR1 method (default)
 %         if false, uses gradient descent/forward-backward method
 %         (or variant, such as BB stepsizes as in the SPG method)
+%   .SR1_diagWeight is a scalar > 0 that controls the weight of the 
+%           BB stepsize, and is usually between 0 and 1.
+%           If set to exactly 1, then the rank 1 term is exactly zero
 %   .BB  
 %       use the Barzilai-Borwein scalar stepsize (by default, true)
 %       .BB_type = 1 uses the longer of the B-B steps
@@ -110,20 +125,25 @@ if isempty(xk), xk = zeros(N,1); end
 
 % -- Options that concern the stepsize --
 SR1             = setOpts( 'SR1', true );
-SR1_diagWeight  = setOpts( 'SR1_diagWeight', 0.8 );
 BB              = setOpts( 'BB', SR1 );
 if isfield(opts,'L') && isempty(opts.L) && ~BB
     warning('zeroSR1:noGoodStepsize','Without Lipschitz constant nor BB stepsize nor line search, bad things will happen');
 end
 L               = setOpts( 'L', 1, 0 );   % Lipschitz constant, e.g. norm(A)^2
 
-
-if SR1, BB_type = setOpts('BB_type',2);
-else, BB_type   = setOpts('BB_type',1); % faster, generally
-end
+SIGMA           = +1; % used for SR1 feature
+% Default BB stepsize. type "1" is longer and usually faster
+BB_type = setOpts('BB_type',2*SR1 + 1*(~SR1));
 if SR1 && BB_type == 1
-    warning('zeroSR1:badBB_parameter','With zero-memory SR1, BB_type must be set to 2. Forcing BB_type = 2 and continuing');
-    BB_type     = 2;
+%     warning('zeroSR1:badBB_parameter','With zero-memory SR1, BB_type must be set to 2. Forcing BB_type = 2 and continuing');
+%     BB_type     = 2;
+
+    warning('zeroSR1:experimental','With zero-memory SR1, BB_type=1 is an untested feature');
+    SIGMA       = -1;
+end
+SR1_diagWeight  = setOpts( 'SR1_diagWeight', 0.8*(BB_type==2) + 1.0*(BB_type==1) );
+if SR1 && BB_type == 2 && SR1_diagWeight > 1
+    SIGMA       = -1;
 end
 
 % ------------ Scan options for capitalization issues, etc. -------
@@ -171,14 +191,14 @@ for nit = 1:nmax
 %     gradient_old    = gradient;
 %     gradient        = grad(xk);
 
-    % "sk" and "gk" are the vectors that will give us quasi-Newton
+    % "sk" and "yk" are the vectors that will give us quasi-Newton
     %   information (and also used in BB step, since that can be
     %   seen as a quasi-Newton method)
     sk      = xk        - xk_old;
-    gk      = gradient  - gradient_old;   % this is "yk" in Nocedal/Wright
-    if nit > 1 && norm(gk) < 1e-13
+    yk      = gradient  - gradient_old;   % Following notation in Nocedal/Wright
+    if nit > 1 && norm(yk) < 1e-13
         warning('zeroSR1:zeroChangeInGradient','gradient isn''t changing , try changing opts.L');
-        gk = [];
+        yk = [];
         skipBB = true;
     end
     
@@ -190,9 +210,9 @@ for nit = 1:nmax
     if BB && nit > 1 && ~skipBB  
         switch BB_type
             case 1
-                t   = (norm(sk)^2)/(sk'*gk); % eq (1.6) in Dai/Fletcher. This is longer
+                t   = (norm(sk)^2)/(sk'*yk); % eq (1.6) in Dai/Fletcher. This is longer
             case 2
-                t   = sk'*gk/( norm(gk)^2 ); % eq (1.7) in Dai/Fletcher. This is shorter
+                t   = sk'*yk/( norm(yk)^2 ); % eq (1.7) in Dai/Fletcher. This is shorter
         end
         if t < 1e-14 % t < 0 should not happen on convex problem!
             myDisp('Curvature condition violated!');
@@ -218,26 +238,32 @@ for nit = 1:nmax
     % ---------------------------------------------------------------------
     % -- Quasi-Newton -- Requries: H0, and builds H
     % ---------------------------------------------------------------------
-    if SR1 && nit > 1 && ~isempty(gk) 
-        gs = gk'*sk;
-%         gHg = gk'*(diagH.*gk);
-        if gs < 0,  myDisp('Serious curvature condition problem!'); stag = Inf;  end
+    if SR1 && nit > 1 && ~isempty(yk) 
+        gs = yk'*sk;
+%         gHg = yk'*(diagH.*yk); % not needed any more
+        if gs < 0
+            myDisp('Serious curvature condition problem!');
+            stag = Inf;  
+        end
         H0  = @(x) diagH.*x;
-        vk  = sk - H0(gk);
-        if vk'*gk  <= 0
+        vk  = sk - H0(yk);
+        vkyk    = vk'*yk;
+        if SIGMA*vkyk  <= 0
             myDisp('Warning: violated curvature conditions');
             % This should only happen if we took an exact B-B step, which we don't.
             vk  = [];
             H   = H0;
+            stepsizes(nit,2)    = 0;
         else
-            vk  = vk/sqrt( vk'*gk );
+            vk  = vk/sqrt( SIGMA*vkyk );
             % And at last, our rank-1 approximation of the inverse Hessian.
-            H   = @(x) H0(x) + vk*(vk'*x);
-            % The (inverse) secant equation is B*sk = gk(=y), or Hy=s
+            H   = @(x) H0(x) + SIGMA*(vk*(vk'*x));
+            % The (inverse) secant equation is B*sk = yk(=y), or Hy=s
             % N.B. We can make a rank-1 approx. of the Hessian too; see the full
             % version of the code.
+            
+            stepsizes(nit,2)    = vk'*vk;
         end
-        stepsizes(nit,2)    = vk'*vk;
     else
         H = H0;
         vk= [];
@@ -249,7 +275,11 @@ for nit = 1:nmax
     % ---------------------------------------------------------------------
     p       = H(-gradient);  % Scaled descent direction. H includes the stepsize
     xk_old  = xk;
-    xk      = prox( xk_old + p, diagH, vk ); % proximal step
+    if SIGMA ~= 1
+        xk      = prox( xk_old + p, diagH, vk, SIGMA );
+    else
+        xk      = prox( xk_old + p, diagH, vk ); % proximal step
+    end
     
     norm_grad = norm( xk - xk_old );
     if any(isnan(xk)) || norm(xk) > 1e10
