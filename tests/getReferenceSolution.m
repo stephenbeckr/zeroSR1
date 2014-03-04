@@ -1,5 +1,12 @@
-
-refDir = fullfile(ZEROSR1ROOT,'tests','reference_solutions');
+global ZEROSR1ROOT
+if exist('ZEROSR1ROOT','var') && ~isempty(ZEROSR1ROOT)
+    refDir = fullfile(ZEROSR1ROOT,'tests','reference_solutions');
+else
+    fprintf('\n\nERROR: cannot find variable ZEROSR1ROOT\n');
+    fprintf('This is probably because you did not run setup_zeroSR1\n');
+    fprintf('  or you "cleared" variables since then. Please re-run setup-zeroSR1\n');
+    error('zeroSR1:cannotFindVariable','Cannot find ZEROSR1ROOT');
+end
 
 fileName = fullfile(refDir,[problemName,'.mat']);
 

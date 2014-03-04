@@ -5,4 +5,8 @@ baseDirectory = fileparts(mfilename('fullpath'));
 addpath(genpath(baseDirectory));
 
 % and make a variable in the main workspace
-assignin('base','ZEROSR1ROOT', baseDirectory );
+% assignin('base','ZEROSR1ROOT', baseDirectory );
+
+% Make it global so it will not be removed by "clear" statements
+% (though "clear all" will still remove it)
+evalin('base', sprintf('global ZEROSR1ROOT; ZEROSR1ROOT=''%s'';',baseDirectory) );

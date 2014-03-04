@@ -11,6 +11,7 @@ Available "h" | Cost for input of size "n"
 ------------- | -------------
 l1 norm | O( n log n)
 non-negativity constraints | O( n log n)
+l1 and non-negativity | O( n log n)
 box constraints | O( n log n )
 l\_infinity norm constraint | O( n log n )
 [hinge loss](http://en.wikipedia.org/wiki/Hinge_loss) | O( n log n )

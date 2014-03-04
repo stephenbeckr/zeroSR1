@@ -1,14 +1,16 @@
-function [f,g,h] = quadraticFunction(x,Q,c,errFcn,extraFcn)
-% f = quadraticFunction(x,Q,c, errFcn,extraFcn)
+function [f,g,h] = normSquaredFunction(x,A,At,b,errFcn,extraFcn)
+% f = normSquaredFunction(x,A,At,c, errFcn,extraFcn)
 %   returns the objective function 'f'
-%   to f(x) = .5<x,Qx> - <c,x>
+%   to f(x) = .5||Ax-b||_2^2
 % [f,g,h] = ...
 %   return the gradient and Hessian as well
 %
-%   "Q" can be a matrix (and it should be Hermitian positive semi-definite)
+%   "A" can be a matrix (in which case set At=[], since it is ignored)
 %   or it can be a function handle to compute the matrix-vector product
+%   (in which case "At" should be a function handle to compute
+%    the transposed-matrix - vector product )
 %
-% [fHist,errHist] = quadraticFunction()
+% [fHist,errHist] = normSquaredFunction()
 %       will return the function history
 %       (and error history as well, if errFcn was provided)
 %       and reset the history to zero.
@@ -16,16 +18,18 @@ function [f,g,h] = quadraticFunction(x,Q,c,errFcn,extraFcn)
 %   (this is intended to be used where extraFcn is the non-smooth term "h")
 %
 % This function is (almost*) mathematically (not computationally) equivalent
-%   to normSquaredFunction( x, A, b ) where
+%   to quadraticFunction( x, Q, c ) where
 %   Q = A'*A and c = A'*b.
 %   (*almost equivalent since there is a constant value difference in 
 %    the objective function)
 %
-% The Lipschitz constant of the gradient is the spectral norm of Q, i.e., norm(Q)
+% The Lipschitz constant of the gradient is 
+%   the squared spectral norm of A, i.e., norm(A)^2
 %
-% Feb 19 2013, Stephen Becker, stephen.beckr@gmail.com
 %
-% See also normSquaredFunction.m
+% March 4 2014, Stephen Becker, stephen.beckr@gmail.com
+%
+% See also quadraticFunction.m
 
 persistent errHist fcnHist nCalls
 if nargin == 0
@@ -40,15 +44,14 @@ if isempty( fcnHist )
     [errHist,fcnHist] = deal( zeros(100,1) );
 end
 
-
-% fcnSimple   = @(w) w'*(Q*w)/2 - c'*w;
-% gradSimple  = @(w) Q*w - c; % 
-if isa(Q,'function_handle')
-    Qx = Q(x);
+error(nargchk(4,6,nargin,'struct'));
+if isa(A,'function_handle')
+    Ax = A(x);
 else
-    Qx = Q*x;
+    Ax = A*x;
 end
-f   = (x'*Qx)/2 - c'*x;
+res = Ax - b;
+f   = .5*norm(res(:))^2;
 
 % Record this:
 nCalls = nCalls + 1;
@@ -58,7 +61,7 @@ if length( errHist ) < nCalls
     fcnHist(end:2*end) = 0;
 end
 fcnHist(nCalls) = f;
-if nargin >= 5 && ~isempty(extraFcn)
+if nargin >= 6 && ~isempty(extraFcn)
     % this is used when we want to record the objective function
     % for something non-smooth, and this routine is used only for the smooth
     % part. So for recording purposes, add in the nonsmooth part
@@ -67,19 +70,24 @@ if nargin >= 5 && ~isempty(extraFcn)
     fcnHist(nCalls) = f + extraFcn(x);
 end
 
-if nargin > 2 && nargout > 1
-%     g = G(x);
-    g = Qx - c;
+if nargout > 1
+    if isa(A,'function_handle')
+        if isempty( At )
+            error('If "A" is given implicitly, we need "At" to compute the gradient');
+        end
+        g   = At( res );
+    else
+        g   = A'*res;
+    end
 end
 if nargout > 2
-    if isa(Q,'function_handle')
+    if isa(A,'function_handle')
         error('Function is only known implicitly, so cannot provide Hessian easily');
     end
-    h = Q;
-%     h = H(x);
+    h = A'*A;
 end
 
 % and if error is requested...
-if nargin >= 4 && ~isempty( errFcn)
+if nargin >= 5 && ~isempty( errFcn)
     errHist(nCalls) = errFcn(x);
 end
