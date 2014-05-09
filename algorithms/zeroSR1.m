@@ -248,16 +248,18 @@ for nit = 1:nmax
         H0  = @(x) diagH.*x;
         vk  = sk - H0(yk);
         vkyk    = vk'*yk;
-        if SIGMA*vkyk  <= 0
+        SIGMA_LOCAL = sign( vkyk );
+        %if SIGMA*vkyk  <= 0
+        if SIGMA_LOCAL*vkyk  <= 0
             myDisp('Warning: violated curvature conditions');
             % This should only happen if we took an exact B-B step, which we don't.
             vk  = [];
             H   = H0;
             stepsizes(nit,2)    = 0;
         else
-            vk  = vk/sqrt( SIGMA*vkyk );
+            vk  = vk/sqrt( SIGMA_LOCAL*vkyk );
             % And at last, our rank-1 approximation of the inverse Hessian.
-            H   = @(x) H0(x) + SIGMA*(vk*(vk'*x));
+            H   = @(x) H0(x) + SIGMA_LOCAL*(vk*(vk'*x));
             % The (inverse) secant equation is B*sk = yk(=y), or Hy=s
             % N.B. We can make a rank-1 approx. of the Hessian too; see the full
             % version of the code.
@@ -265,6 +267,7 @@ for nit = 1:nmax
             stepsizes(nit,2)    = vk'*vk;
         end
     else
+        SIGMA_LOCAL     = SIGMA;
         H = H0;
         vk= [];
     end
@@ -275,8 +278,8 @@ for nit = 1:nmax
     % ---------------------------------------------------------------------
     p       = H(-gradient);  % Scaled descent direction. H includes the stepsize
     xk_old  = xk;
-    if SIGMA ~= 1
-        xk      = prox( xk_old + p, diagH, vk, SIGMA );
+    if SIGMA_LOCAL ~= 1
+        xk      = prox( xk_old + p, diagH, vk, SIGMA_LOCAL );
     else
         xk      = prox( xk_old + p, diagH, vk ); % proximal step
     end
