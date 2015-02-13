@@ -98,7 +98,7 @@ end
 % http://epubs.siam.org/doi/abs/10.1137/1015032
 % But in the special case when D is a scaled identity, checking is very easy:
 if plusminus < 0 && all( d==d(1) )
-    minE = d(1) + plusminus*norm(u);
+    minE = d(1) + plusminus*norm(u)^2;
     if minE <= 0, error('The scaling matrix is not positive definite'); end
 end
 
