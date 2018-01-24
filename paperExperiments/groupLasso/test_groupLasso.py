@@ -144,7 +144,7 @@ from Algorithms.TsengZerosSR1_ProximalGradient import *;
 from Algorithms.SpaRSA import *;
 
 # general parameter
-maxiter = 5000;
+maxiter = 1200;
 check = 200;
 tol = -1;
 
