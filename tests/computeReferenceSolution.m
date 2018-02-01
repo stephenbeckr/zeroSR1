@@ -11,5 +11,9 @@ switch problemName
         variable xRef(N)
         minimize sum_square(A*xRef-b)/2 + lambda*norm(xRef,1)
         cvx_end
-        
+    case 'simple_002' % same setting, different parameters
+        cvx_begin
+        variable xRef(N)
+        minimize sum_square(A*xRef-b)/2 + lambda*norm(xRef,1)
+        cvx_end
 end

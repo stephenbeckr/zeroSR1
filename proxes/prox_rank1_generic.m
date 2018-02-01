@@ -85,6 +85,9 @@ if all( u==0 )
     NO_U = true;
 else
     NO_U = false;
+    if numel(u) > length(u)
+        error('u must be a vector, not a matrix');
+    end
 end
 
 % Now, V > 0 (i.e., V is positive definite) iff V^{-1} exists and V^{-1} > 0
