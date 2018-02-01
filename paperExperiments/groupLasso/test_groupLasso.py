@@ -144,7 +144,7 @@ from Algorithms.TsengZerosSR1_ProximalGradient import *;
 from Algorithms.SpaRSA import *;
 
 # general parameter
-maxiter = 5000;
+maxiter = 1200;
 check = 200;
 tol = -1;
 
@@ -397,11 +397,11 @@ for i in range(0,nalgs):
 if compute_optimal_value == False:
     for i in range(0,nalgs):
         if ts[i].size > 0:
-            file = open("results/GroupLasso_conv_"+nams[i]+"_time.dat", "w");
+            file = open("GroupLasso_conv_"+nams[i]+"_time.dat", "w");
             for j in range(0,maxiter,1):
                 file.write("%f %.12f\n" %(ts[i][j], rs[i][j])); 
             file.close();
-        file = open("results/GroupLasso_conv_"+nams[i]+"_iter.dat", "w");
+        file = open("GroupLasso_conv_"+nams[i]+"_iter.dat", "w");
         for j in range(0,maxiter,1):
             file.write("%d %.12f\n" %(j, rs[i][j])); 
         file.close();
