@@ -3,6 +3,8 @@
 The zeroSR1 toolbox implements the algorithm from 'A quasi-Newton proximal splitting method' by 
 Stephen Becker and Jalal Fadili, which appeared in [NIPS 2012](http://nips.cc/). The paper is available at [arXiv 1206.1156](http://arxiv.org/abs/1206.1156).
 
+(Update, January 2018, we have an extended paper [On Quasi-Newton Forward--Backward Splitting: Proximal Calculus and Convergence](https://arxiv.org/abs/1801.08691) by Stephen Becker, Jalal Fadili and Peter Ochs)
+
 Briefly, the algorithm follows the standard proximal-gradient method, but allows a scaled prox. This enables us to use a limited-memory SR1 method (similar to L-BFGS).
 
 The algorithm solves problems of the form min\_x f(x) + h(x) where f is differentiable (more precisely, with a Lipschitz gradient) and h is one of the following (see the paper):
@@ -35,24 +37,24 @@ For Matlab, there is no installation necessary. Every time you run a new Matlab 
 Run `tests/test_solver_simple.m` to see how to solve a typical problem
 
 # Structure
-In each folder, see they `Contents.m` file for more information
-## Algorithms
+In each folder, see the `Contents.m` file for more information
+### Algorithms
 This includes the zeroSR1 algorithm as well as implemenations of FISTA and other proximal-gradient methods
 
-## Proxes
+### Proxes
 The scaled diagonal+ rank1 prox operators for various "g" functions
 
-## SmoothFunctions
+### SmoothFunctions
 These are pre-made wrappers for the various smooth "f" functions. The files here with the `_splitting` suffix are intended for use with any method that requires forming the augmented variable "x\_aug = (x\_pos, x\_neg)". For example, this approach is used when using L-BFGS-B (which only allows box constraints, such as x\_pos >= 0,  x\_neg <= 0) to solve the LASSO problem.
 
-## Utilities
+### Utilities
 Helper files
 
-## Tests
+### Tests
 Verify the algorithm and proxes are working correctly. This uses [CVX](http://cvxr.com/cvx) to verify; if this is not installed on your system, then it relies on precomputed solutions stored in a subdirectory.
 
-## Experiments
-Recreate tests of several algorithms, or do something more interesting than the scripts in `tests`
+### paperExperiments
+Recreates the experiments in the 2018 paper
 
-## Authors
-The original authors are Stephen Becker and Jalal Fadili. Further contributions are welcome.
+# Authors
+The original authors are Stephen Becker, Jalal Fadili and Peter Ochs. Further contributions are welcome.
