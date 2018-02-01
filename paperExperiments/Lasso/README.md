@@ -41,6 +41,12 @@ For compilation, try: `minFunc/mexAll.m`
 
 We noticed that line 13 in `lbfgsC.c` declared `int nVars,nSteps,lhs_dims[2];` and for us, this threw a warning at compile-time and an error at run-time. One fix is to remove the `lhs_dims[2]` from that line and instead add a new line with: `size_t lhs_dims[2];`
 
+## Output
+
+Running test4 should give something like this:
+
+![Test 4 results](test4.png?raw=true)
+
 ## Authors
 The authors are Stephen Becker, Jalal Fadili and Peter Ochs.
 
