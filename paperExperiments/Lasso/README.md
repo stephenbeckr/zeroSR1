@@ -47,6 +47,10 @@ Running test4 should give something like this:
 
 ![Test 4 results](test4.png?raw=true)
 
+Running test5 should give something like this:
+
+![Test 5 results](test5.png?raw=true)
+
 ## Authors
 The authors are Stephen Becker, Jalal Fadili and Peter Ochs.
 
