@@ -122,10 +122,15 @@ xk      = setOpts( 'x0', [], [], [], true );
 N       = setOpts( 'N', length(xk) );
 if N==0 && nargin > 0, error('for now, must specify opts.N = N'); end
 if isempty(xk), xk = zeros(N,1); end
+damped  = setOpts('damped',false); % 1=no damping, .01 = very tiny step
 
 % -- Options that concern the stepsize --
 SR1             = setOpts( 'SR1', true );
-BB              = setOpts( 'BB', SR1 );
+BFGS            = setOpts( 'BFGS', false );
+if SR1 && BFGS
+    error('zeroSR1:conflictingArgs','Cannot set SR1 and BFGS to both be true');
+end
+BB              = setOpts( 'BB', SR1 || BFGS );
 if isfield(opts,'L') && isempty(opts.L) && ~BB
     warning('zeroSR1:noGoodStepsize','Without Lipschitz constant nor BB stepsize nor line search, bad things will happen');
 end
@@ -133,15 +138,20 @@ L               = setOpts( 'L', 1, 0 );   % Lipschitz constant, e.g. norm(A)^2
 
 SIGMA           = +1; % used for SR1 feature
 % Default BB stepsize. type "1" is longer and usually faster
-BB_type = setOpts('BB_type',2*SR1 + 1*(~SR1));
-if SR1 && BB_type == 1
+BB_type = setOpts('BB_type',2*(SR1||BFGS) + 1*(~(SR1||BFGS)) );
+if (SR1||BFGS) && BB_type == 1
 %     warning('zeroSR1:badBB_parameter','With zero-memory SR1, BB_type must be set to 2. Forcing BB_type = 2 and continuing');
 %     BB_type     = 2;
 
     warning('zeroSR1:experimental','With zero-memory SR1, BB_type=1 is an untested feature');
     SIGMA       = -1;
 end
-SR1_diagWeight  = setOpts( 'SR1_diagWeight', 0.8*(BB_type==2) + 1.0*(BB_type==1) );
+if SR1
+    defaultWeight = 0.8*(BB_type==2) + 1.0*(BB_type==1);
+else
+    defaultWeight = 1;
+end
+SR1_diagWeight  = setOpts( 'SR1_diagWeight', defaultWeight );
 if SR1 && BB_type == 2 && SR1_diagWeight > 1
     SIGMA       = -1;
 end
@@ -165,7 +175,7 @@ xk_old  = xk;
 getGradient     = @(varargin) getGradientFcn(fcn,grad, varargin{:});
 fxold   = Inf;
 t       = 1/L; % initial stepsize
-stepsizes = zeros(nmax,1 + SR1); % records some statisics
+stepsizes = zeros(nmax,1 + (SR1||BFGS)); % records some statisics
 if ~isempty(errFcn)
     if ~isa(errFcn,'function_handle')
         error('errFcn must be a function');
@@ -218,7 +228,7 @@ for nit = 1:nmax
             myDisp('Curvature condition violated!');
             stag    = Inf;
         end
-        if SR1
+        if SR1 || BFGS
             % we cannot take a full BB step, otherwise we exactly satisfy the secant
             %   equation, and there is no need for a rank-1 correction.
             t    = SR1_diagWeight*t; % SR1_diagWeights is a scalar less than 1 like 0.6
@@ -266,6 +276,29 @@ for nit = 1:nmax
             
             stepsizes(nit,2)    = vk'*vk;
         end
+    elseif BFGS && nit > 1 && ~isempty(yk) 
+        gs = yk'*sk;
+        rho= 1/gs;
+        if gs < 0
+            myDisp('Serious curvature condition problem!');
+            stag = Inf;  
+        end
+        H0  = @(x) diagH.*x;
+        
+        tauBB   = sk'*yk/( norm(yk)^2);
+        uk      = sk/2 + H0(sk)/(2*tauBB) - H0(yk);
+        % if H0 is tauBB*I (e.g., gamma=1), then vk = sk - H0(yk).
+        
+        
+        stepsizes(nit,2)    = uk'*uk;
+        
+        vk      = [sk-uk, sk+uk]*sqrt(rho/2); % rank 2!
+        SIGMA_LOCAL = [-1,1];
+        
+        H   = @(x) H0(x) + vk*( diag(SIGMA_LOCAL)*(vk'*x) );
+        
+        %fprintf('DEBUG: %.2e\n', norm( H(yk) - sk )  );
+        
     else
         SIGMA_LOCAL     = SIGMA;
         H = H0;
@@ -278,10 +311,19 @@ for nit = 1:nmax
     % ---------------------------------------------------------------------
     p       = H(-gradient);  % Scaled descent direction. H includes the stepsize
     xk_old  = xk;
-    if SIGMA_LOCAL ~= 1
-        xk      = prox( xk_old + p, diagH, vk, SIGMA_LOCAL );
+    if ~isequal(SIGMA_LOCAL,1)
+        if damped
+            xk      = xk + damped*(prox( xk_old + p, diagH, vk, SIGMA_LOCAL )-xk);
+        else
+            xk      = prox( xk_old + p, diagH, vk, SIGMA_LOCAL );
+        end
     else
-        xk      = prox( xk_old + p, diagH, vk ); % proximal step
+        if damped
+            xk      = xk + damped*(prox( xk_old + p, diagH, vk )-xk);
+        else
+            xk      = prox( xk_old + p, diagH, vk ); % proximal step
+        end
+        
     end
     
     norm_grad = norm( xk - xk_old );
@@ -308,7 +350,7 @@ for nit = 1:nmax
     end
     
     if VERBOSE && (~rem(nit,VERBOSE) || stag>maxStag )
-        fprintf(fid,'Iter: %5d, f: %.3e, df: %.2e, ||grad||: %.2e, step %.2e\n',...
+        fprintf(fid,'Iter: %5d, f: % 7.3e, df: %.2e, ||grad||: %.2e, step %.2e\n',...
             nit,fx,df, norm_grad, t);
     end
     
