@@ -58,3 +58,15 @@ Recreates the experiments in the 2018 paper
 
 # Authors
 The original authors are Stephen Becker, Jalal Fadili and Peter Ochs. Further contributions are welcome.
+
+## Citing
+This software is provided free of charge, but we request that if you use this for an academic paper, please cite the following work:
+
+bibtex entry:
+
+    @INPROCEEDINGS{quasiNewtonNIPS,
+      author = {S. Becker and J. Fadili},
+      title = {A quasi-{N}ewton proximal splitting method},
+      booktitle = {Neural Information Processing Systems (NIPS)},
+      year = {2012}
+    }
