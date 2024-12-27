@@ -64,9 +64,22 @@ This software is provided free of charge, but we request that if you use this fo
 
 bibtex entry:
 
-    @INPROCEEDINGS{quasiNewtonNIPS,
-      author = {S. Becker and J. Fadili},
+    @inproceedings{quasiNewtonNIPS,
+      author = {Becker, Stephen and Fadili, Jalal},
       title = {A quasi-{N}ewton proximal splitting method},
       booktitle = {Neural Information Processing Systems (NIPS)},
       year = {2012}
+    }
+
+    @article{quasiNewtonSIOPT,
+        author = {Becker, Stephen and Fadili, Jalal and Ochs, Peter},
+        title = {On Quasi-{N}ewton Forward-Backward Splitting: Proximal Calculus and Convergence},
+        journal = {SIAM Journal on Optimization},
+        volume = {29},
+        number = {4},
+        pages = {2445-2481},
+        year = {2019},
+        doi = {10.1137/18M1167152},
+        URL = {https://doi.org/10.1137/18M1167152},
+        eprint = {https://doi.org/10.1137/18M1167152}
     }
